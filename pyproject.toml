@@ -1,11 +1,13 @@
 [project]
-name = "practico-fastapi-4"
+name = "practico-fastapi-5"
 version = "0.1.0"
 description = "Práctico FastAPI"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.20.0",
     "fastapi[standard]>=0.141.1",
     "pymysql>=1.2.0",
     "sqlalchemy>=2.0.52",
+    "sqlmodel>=0.0.47",
 ]

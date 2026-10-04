@@ -1,12 +1,11 @@
 from typing import Annotated
-from schemas.tipos import IntPositivo, BoolActivo
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
-from sqlalchemy.orm import Session
+from sqlmodel import Session, select
 
 from database import get_db
-from models.clientes import Cliente
-from schemas.clientes import ClienteSchema, ClienteUpdateSchema
+from models.clientes import Cliente, ClienteBase, ClientePublic
+from models.anidados import ClienteNested
 
 clientes_routers = APIRouter()
 
@@ -23,7 +22,7 @@ NOT_FOUND_RESPONSE = {
     },
 }
 
-@clientes_routers.get("/", response_model=list[ClienteSchema])
+@clientes_routers.get("/", response_model=list[ClientePublic])
 async def get_clientes(db: Session = Depends(get_db)):
     clientes = db.query(Cliente).all()
     return clientes
@@ -31,10 +30,10 @@ async def get_clientes(db: Session = Depends(get_db)):
 @clientes_routers.get(
     "/{id}",
     responses=NOT_FOUND_RESPONSE,
-    response_model=ClienteSchema,
+    response_model=ClienteNested,
 )
 async def get_clientes_by_id(
-    id: IntPositivo, db: Session = Depends(get_db)
+    id: Annotated[int, Path(gt=0)], db: Session = Depends(get_db)
 ):
 
     cliente_obtenido = db.get(Cliente, id)
@@ -44,9 +43,9 @@ async def get_clientes_by_id(
 
 
 
-@clientes_routers.post("/", response_model=ClienteSchema) 
+@clientes_routers.post("/", response_model=ClienteNested) 
 async def crear_cliente(
-    cliente_nuevo: ClienteSchema, db: Session = Depends(get_db)
+    cliente_nuevo: ClienteBase, db: Session = Depends(get_db)
 ): 
 
     cliente_db = Cliente(
@@ -61,11 +60,11 @@ async def crear_cliente(
     return cliente_db
 
 @clientes_routers.put(
-    "/{id}", responses=NOT_FOUND_RESPONSE, response_model=ClienteSchema
+    "/{id}", responses=NOT_FOUND_RESPONSE, response_model=ClientePublic
 )
 async def editar_cliente(
-    id: IntPositivo,
-    cliente_editar: ClienteUpdateSchema,
+    id: Annotated[int, Path(gt=0)],
+    cliente_editar: ClienteBase,
     db: Session = Depends(get_db),
 ):
 
@@ -84,13 +83,13 @@ async def editar_cliente(
 @clientes_routers.delete(
     "/{id}",
     responses=NOT_FOUND_RESPONSE, 
-    response_model=list[ClienteSchema],
+    response_model=list[ClientePublic],
 )
 async def borrar_cliente(
-    id: IntPositivo,
+    id: Annotated[int, Path(gt=0)],
     db: Annotated[Session, Depends(get_db)],
-    logico: BoolActivo = False,
-) -> ClienteSchema:
+    logico: Annotated[bool, Query(description="Mantener registro?")] = False,
+) -> ClientePublic:
 
     cliente_obtenido = db.get(Cliente, id)
     if cliente_obtenido is not None:
@@ -101,3 +100,4 @@ async def borrar_cliente(
             db.commit()
         return db.query(Cliente).all()
     raise HTTPException(status_code=404, detail="Cliente no encontrado")
+

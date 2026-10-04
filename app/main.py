@@ -1,18 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import Base, engine
-from models.clientes import (
-    Cliente,
-)
-from routers.clientes import clientes_routers
 
-Base.metadata.create_all(bind=engine)
+from routers.clientes import clientes_routers
+from routers.servicio import servicio_routers
 
 
 app = FastAPI()
 app.title = "Clientes_db"
 
 app.include_router(clientes_routers, tags=["Clientes"], prefix="/clientes")
+app.include_router(servicio_routers, tags=["Servicio"], prefix="/servicio")
 
 app.add_middleware(
     CORSMiddleware,
